@@ -12,6 +12,21 @@ typedef struct vec3{
   int z;
 } vec3;
 
+vec2 get_vec2(int x, int y){
+  vec2 v;
+  v.x = x;
+  v.y = y;
+  return v;
+}
+
+vec3 get_vec3(int x, int y, int z){
+  vec3 v;
+  v.x = x;
+  v.y = y;
+  v.z = z;
+  return v;
+}
+
 // Calculate distance between any 2 points in a 2D space using any type of distance
 // I have observed that p > 2 is great for procedural biome map generation using voronoi diagrams
 // Kind of slow, if p = 1 or p = 2 use other functions to save on computing speed
