@@ -1,31 +1,6 @@
 #include <math.h>
 #include <stdlib.h>
-
-typedef struct vec2{
-  int x;
-  int y;
-} vec2;
-
-typedef struct vec3{
-  int x;
-  int y;
-  int z;
-} vec3;
-
-vec2 get_vec2(int x, int y){
-  vec2 v;
-  v.x = x;
-  v.y = y;
-  return v;
-}
-
-vec3 get_vec3(int x, int y, int z){
-  vec3 v;
-  v.x = x;
-  v.y = y;
-  v.z = z;
-  return v;
-}
+#include "gen_aliases.c"
 
 // Calculate distance between any 2 points in a 2D space using any type of distance
 // I have observed that p > 2 is great for procedural biome map generation using voronoi diagrams
@@ -45,4 +20,3 @@ float euclid_distance_2D(vec2 point_a, vec2 point_b){
 float manhattan_distance_2D(vec2 point_a, vec2 point_b){
   return abs(point_b.y - point_a.y) + abs(point_b.x - point_a.x);
 }
-

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include "distance.c"
 
+// gives the index of the closest generator to the given point
 int get_closest_gen(vec2 * generators, int generator_quantity, vec2 point, int p){
   float * distances = (float *)calloc(generator_quantity, sizeof(float));
   
@@ -39,14 +40,17 @@ int get_closest_gen(vec2 * generators, int generator_quantity, vec2 point, int p
 }
 
 // The algorithm uses an extremely slow aproach to calculating distance, (checking every generator with every point in the array)
-// I don't really understand fortune's algorithm, and it is only used to generate a diagram with euclidean distance
+// I don't really understand fortune's algorithm, and it is only used to generate a diagram with euclidean distance anyway
 // TODO Implement fortune's algorithm to generate the diagram when p = 2 (euclidean distance)
-int ** generate_voronoi_diagram(vec2 * generators, int generator_quantity, int height, int width, int p){
-  int ** diagram = (int **)calloc(height, sizeof(int *));
-  for (int i = 0; i < height; i ++){
-    diagram[i] = (int *)calloc(width, sizeof(int));
-    for (int j = 0; j < width; j ++){
-      diagram[i][j] = get_closest_gen(generators, generator_quantity, get_vec2(j, i), p);
+int_map generate_voronoi_diagram(vec2 * generators, int generator_quantity, vec2 dimensions, int p){
+  int_map diagram;
+  diagram.height = dimensions.y;
+  diagram.width = dimensions.x;
+  diagram.map = (int **)calloc(diagram.height, sizeof(int *));
+  for (int i = 0; i < diagram.height; i ++){
+    diagram.map[i] = (int *)calloc(diagram.width, sizeof(int));
+    for (int j = 0; j < diagram.width; j ++){
+      diagram.map[i][j] = get_closest_gen(generators, generator_quantity, get_vec2(j, i), p);
     }
   }
   return diagram;
