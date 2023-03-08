@@ -42,13 +42,13 @@ int get_closest_gen(vec2 * generators, int generator_quantity, vec2 point, int p
 // The algorithm uses an extremely slow aproach to calculating distance, (checking every generator with every point in the array)
 // I don't really understand fortune's algorithm, and it is only used to generate a diagram with euclidean distance anyway
 // TODO Implement fortune's algorithm to generate the diagram when p = 2 (euclidean distance)
-int_map generate_voronoi_diagram(vec2 * generators, int generator_quantity, vec2 dimensions, int p){
-  int_map diagram;
+short_map generate_voronoi_diagram(vec2 * generators, int generator_quantity, vec2 dimensions, int p){
+  short_map diagram;
   diagram.height = dimensions.y;
   diagram.width = dimensions.x;
-  diagram.map = (int **)calloc(diagram.height, sizeof(int *));
+  diagram.map = (short **)calloc(diagram.height, sizeof(short *));
   for (int i = 0; i < diagram.height; i ++){
-    diagram.map[i] = (int *)calloc(diagram.width, sizeof(int));
+    diagram.map[i] = (short *)calloc(diagram.width, sizeof(short));
     for (int j = 0; j < diagram.width; j ++){
       diagram.map[i][j] = get_closest_gen(generators, generator_quantity, get_vec2(j, i), p);
     }
