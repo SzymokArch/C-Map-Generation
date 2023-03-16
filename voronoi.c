@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <math.h>
 #include <stdbool.h>
-#include <stdio.h>
 
 typedef struct site{
   int y;
@@ -101,19 +100,3 @@ short ** generate_voronoi_diagram(int seed, int size, int divisions, int p){
   free(centarr);
   return map;
 }
-
-//int main(int argc, char * argv[]){
-//  short ** map = generate_voronoi_diagram(2133, 33, 2, 3);
-//  for (int i = 0; i < 33; i ++){
-//    for (int j = 0; j < 33; j ++){
-//     printf("%i ", map[i][j]);
-//    }
-//    printf("\n");
-//  }
-//
-//  for (int i = 0; i < 33; i ++){
-//    free(map[i]);
-//  }
-//  free(map);
-//  return 0;
-//}
