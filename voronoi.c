@@ -1,27 +1,46 @@
 #include <stdlib.h>
-#include "distance.c"
+#include <math.h>
+#include <stdbool.h>
+#include <stdio.h>
 
-vec2 get_center(vec2 start, vec2 end){
-  int x = abs(end.x - start.x)/2;
-  int y = abs(end.y - start.y)/2;
-  return get_vec2(x, y);
+typedef struct site{
+  int y;
+  int x;
+} site;
+
+float minkowski_distance(int ay, int ax, int by, int bx, int p){
+  switch (p){
+    case 1:
+      return abs(by - ay) + abs(bx - ax);
+    case 2:
+      return sqrt(pow(by - ay, 2) + pow(bx - ax, 2));
+    default:
+      return pow(pow(abs(ay - by), p) + pow(abs(ax - bx), p), 1./p);
+  }
 }
 
-vec2 * get_center_array(short_map map, short iterations){
-  int center_quantity = pow(4, iterations);
-  vec2 * center_array = (vec2 *)calloc(center_quantity, sizeof(vec2));
-  int pitch = (map.height - 1)/pow(2, iterations);
-  short index = 0;
-  for (int i = 0; i < map.height - pitch; i += pitch){
-    for (int j = 0; j < map.width - pitch; j += pitch){
-      center_array[index] = get_center(get_vec2(j, i), get_vec2(j + pitch, i + pitch));
+site get_center(int start_y, int start_x, int pitch){
+  site result;
+  result.y = abs(2 * start_y + pitch) / 2;
+  result.x = abs(2 * start_x + pitch) / 2;
+  return result;
+}
+
+site * get_center_array(int size, int divisions){
+  site * center_array = (site *)calloc(pow(4, divisions), sizeof(site));
+  int pitch = (size - 1)/pow(2, divisions);
+  int index = 0;
+  for (int i = 0; i < size - pitch; i += pitch){
+    for (int j = 0; j < size - pitch; j += pitch){
+      center_array[index].y = (2 * i + pitch)/2;
+      center_array[index].x = (2 * j + pitch)/2;
       index ++;
     }
   }
   return center_array;
 }
 
-void move_centers(int seed, vec2 * center_array, int center_quantity){
+void move_centers(int seed, site * center_array, int center_quantity){
   srand(seed);
   bool movement_down;
   bool movement_right;
@@ -44,68 +63,57 @@ void move_centers(int seed, vec2 * center_array, int center_quantity){
   }
 }
 
-// gives the index of the closest generator to the given point
-int get_closest_gen(vec2 * generators, int generator_quantity, vec2 point, int p){
-  float * distances = (float *)calloc(generator_quantity, sizeof(float));
-  
-  float min = distances[0];
-  int min_index = 0;
-
-  switch (p){
-    // manhattan (taxicab) distance (minkowski distance, p = 1)
-    case 1:
-      for (int i = 0; i < generator_quantity; i ++){
-        distances[i] = manhattan_distance_2D(point, generators[i]);
-      }
-      break;
-    // euclidean distance (minkowski distance, p = 2)
-    case 2:
-      for (int i = 0; i < generator_quantity; i ++){
-        distances[i] = euclid_distance_2D(point, generators[i]);
-      }
-      break;
-    // any other minkowski distance p
-    default:
-      for (int i = 0; i < generator_quantity; i ++){
-        distances[i] = minkowski_distance_2D(point, generators[i], p);
-      }
-      break;
-  }
-
-  for (int i = 0; i < generator_quantity; i ++){
+short get_closest_site(int y, int x, site * sites, int site_quantity, int p){
+  float min;
+  short index;
+  float * distances = (float *)calloc(site_quantity, sizeof(float));
+  min = minkowski_distance(y, x, sites[0].y, sites[0].x, p);
+  index = 0;
+  for (int i = 0; i < site_quantity; i++){
+    distances[i] = minkowski_distance(y, x, sites[i].y, sites[i].x, p);
     if (distances[i] < min){
       min = distances[i];
-      min_index = i;
+      index = i;
     }
   }
-  free(distances);
-  return min_index;
+  return index;
 }
 
-// The algorithm uses an extremely slow aproach to calculating distance, (checking every generator with every point in the array)
-// I don't really understand fortune's algorithm, and it is only used to generate a diagram with euclidean distance anyway
-// TODO Implement fortune's algorithm to generate the diagram when p = 2 (euclidean distance)
-void voronoi_diagram(short_map map, vec2 * generators, int generator_quantity, int p){
-  for (int i = 0; i < map.height; i ++){
-    for (int j = 0; j < map.width; j ++){
-      map.map[i][j] = get_closest_gen(generators, generator_quantity, get_vec2(j, i), p);
-    }
-  }
-}
-
-short_map generate_voronoi_diagram(int seed, int size, int divisions, int p){
-  short_map map;
-  map.height = size;
-  map.width = size;
-  map.map = (short **)calloc(size, sizeof(short *));
+void voronoi_diagram(short ** map, int size, site * sites, int site_quantity, int p){
   for (int i = 0; i < size; i ++){
-    map.map[i] = (short *)calloc(size, sizeof(short));
+    for (int j = 0; j < size; j ++){
+      map[i][j] = get_closest_site(j, i, sites, site_quantity, p);
+    }
   }
-  vec2 * center_array = get_center_array(map, divisions);
-  int center_quantity = pow(4, divisions);
-  move_centers(seed, center_array, center_quantity);
-  voronoi_diagram(map, center_array, center_quantity, p);
-  free(center_array);
+}
 
+short ** generate_voronoi_diagram(int seed, int size, int divisions, int p){
+  srand(seed);
+  short ** map = (short **)calloc(size, sizeof(short *));
+  for (int i = 0; i < size; i ++){
+    map[i] = (short *)calloc(size, sizeof(short));
+  }
+  site * centarr = get_center_array(size, divisions);
+  int cent_q = pow(4, divisions);
+  move_centers(seed, centarr, cent_q);
+  voronoi_diagram(map, size, centarr, cent_q, p);
+
+  free(centarr);
   return map;
 }
+
+//int main(int argc, char * argv[]){
+//  short ** map = generate_voronoi_diagram(2133, 33, 2, 3);
+//  for (int i = 0; i < 33; i ++){
+//    for (int j = 0; j < 33; j ++){
+//     printf("%i ", map[i][j]);
+//    }
+//    printf("\n");
+//  }
+//
+//  for (int i = 0; i < 33; i ++){
+//    free(map[i]);
+//  }
+//  free(map);
+//  return 0;
+//}
