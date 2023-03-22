@@ -1,52 +1,71 @@
 #include <stdlib.h>
 #include <stdbool.h>
-#include "gen_aliases.c"
 
-bool is_within_map_bounds(vec2 point, bool_map map){
-    if (point.y < 0 || point.x < 0 || point.y >= map.height || point.x >= map.width){
-        return false;
-    }
-    return true;
+bool is_within_map_bounds(int y, int x, bool ** map, int size){
+  if (y < 0 || x < 0 || y >= size || x >= size){
+    return false;
+  }
+  return true;
 }
 
-bool_map generate_cellular_automata(bool_map map, int iterations){
-    int f_count;
-    bool_map temp_map;
-    temp_map.height = map.height;
-    temp_map.width = map.width;
-    temp_map.map = (bool **)calloc(temp_map.height, sizeof(bool *));
-    for (int i = 0; i < temp_map.height; i++){
-        temp_map.map[i] = (bool *)calloc(temp_map.width, sizeof(bool));
+void copy_bool_map(bool ** dest, bool ** src, int size){
+  for (int i = 0; i < size; i ++){
+    for (int j = 0; j < size; j ++){
+      dest[i][j] = src[i][j];
     }
+  }
+}
 
-    for (int i = 0; i < iterations; i ++){
-        copy_bool_map(map, temp_map);
-        for (int j = 0; j < map.height; j++){
-            for (int k = 0; k < map.width; k++){
-                f_count = 0;
-                for (int y = j - 1; y <= j + 1; y ++){
-                    for (int x = k - 1; x <= k + 1; x++){
-                        if (is_within_map_bounds(get_vec2(x, y), map)){
-                            if (y != j || x != k){
-                                if (!temp_map.map[y][x]){
-                                    f_count ++;
-                                }
-                            }
-                        }
-                        else {
-                            f_count ++;
-                        }
-                    }
+void cellular_automata(bool ** map, int size, int iterations){
+  int f_count;
+  bool ** temp_map = (bool **)calloc(size, sizeof(bool *));
+  for (int i = 0; i < size; i ++){
+    temp_map[i] = (bool *)calloc(size, sizeof(bool));
+  }
+
+  for (int i = 0; i < iterations; i ++){
+    copy_bool_map(temp_map, map, size);
+    for (int j = 0; j < size; j ++){
+      for (int k = 0; k < size; k ++){
+        f_count = 0;
+        for (int y = j - 1; y <= j + 1; y ++){
+          for (int x = k - 1; x <= k + 1; x ++){
+            if (is_within_map_bounds(y, x, map, size)){
+              if (y != j || x != k){
+                if (!temp_map[y][x]){
+                  f_count ++;
                 }
-                if (f_count > 4){
-                    map.map[j][k] = 0;
-                } 
-                else {
-                    map.map[j][k] = 1;
-                }
+              }
             }
+            else {
+              f_count ++;
+            }
+          }
         }
+        if (f_count > 4){
+          map[j][k] = 0;
+        }
+        else {
+          map[j][k] = 1;
+        }
+      }
     }
+  }
+  for (int i = 0; i < size; i ++){
+    free(temp_map[i]);
+  }
+  free(temp_map);
+}
 
-    return map;
+bool ** generate_cellular_automata(int seed, int density, int size, int iterations){
+  srand(seed);
+  bool ** map = (bool **)calloc(size, sizeof(bool *));
+  for (int i = 0; i < size; i ++){
+    map[i] = (bool *)calloc(size, sizeof(bool));
+    for (int j = 0; j < size; j ++){
+      map[i][j] = rand()%101 > density;
+    }
+  }
+  cellular_automata(map, size, iterations);
+  return map;
 }
