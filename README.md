@@ -8,4 +8,5 @@ My implementations strive to be easy to understand and reimplement.
 * Cellulat Automata
 * Value Noise
 * Voronoi Diagrams
+
 As time goes on, obviously more methods will be added
