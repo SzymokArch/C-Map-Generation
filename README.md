@@ -10,6 +10,6 @@ In depth explenations of the algorithms will be in each directory.
 * [Value Noise](../main/value_noise)
 * [Voronoi Diagrams](../main/voronoi)
 
-*Graphical examples made using tha [raylib](https://www.raylib.com) graphics library*
+*Graphical examples made using the [raylib](https://www.raylib.com) graphics library*
 
 As time goes on, obviously more methods will be added.
