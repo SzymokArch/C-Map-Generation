@@ -39,7 +39,7 @@ int main(int argc, char * argv[]){
   scanf("%i %i %lf", &seed, &oct, &scal);
 
   float ** gmap = generate_value_noise(seed, 1025, oct, scal);
-  InitWindow(1024, 1024, "main");
+  InitWindow(1024, 1024, "value noise example");
   while (!WindowShouldClose()){
     BeginDrawing();
     ClearBackground(WHITE);
