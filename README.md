@@ -4,7 +4,7 @@ like **3D animation**, **3D modelling** and especially **game development**.
 There are a lot of ready-made implementations on the web, but a lot of them are quite hard to understand.
 My implementations strive to be easy to understand and reimplement.
 
-In depth explenations of the algorithms will be places in each directory.
+In depth explenations of the algorithms will be in each directory.
 ### For now, I made three implementations of popular procedural generation methods.
 #### These being:
 * [Cellular Automata](../main/cellular_automata)
