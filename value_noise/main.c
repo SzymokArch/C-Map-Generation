@@ -1,5 +1,3 @@
-// g++ -lraylib -lGL -lm -lpthread -ldl -lrt -lX11 -o main_value_noise main_value_noise.cpp && ./main_value_noise
-
 #include "value_noise.h"
 #include <stdio.h>
 #include <raylib.h>
