@@ -6,7 +6,7 @@ My implementations strive to be easy to understand and reimplement.
 ### For now, I made three implementations of popular procedural generation methods.
 #### These being:
 * [Cellular Automata](../main/cellular_automata)
-* Value Noise
-* Voronoi Diagrams
+* [Value Noise](../main/value_noise)
+* [Voronoi Diagrams](../main/voronoi)
 
 As time goes on, obviously more methods will be added
