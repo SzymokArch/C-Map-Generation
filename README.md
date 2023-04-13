@@ -10,6 +10,7 @@ In depth explenations of the algorithms will be in each directory.
 * [Cellular Automata](../main/cellular_automata)
 * [Value Noise](../main/value_noise)
 * [Voronoi Diagrams](../main/voronoi)
+* [Worley Noise](.../main/voronoi)
 
 *Graphical examples made using the [raylib](https://www.raylib.com) graphics library*
 
