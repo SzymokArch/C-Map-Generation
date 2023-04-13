@@ -14,13 +14,6 @@ float minkowski_distance(int ay, int ax, int by, int bx, int p){
   }
 }
 
-site get_center(int start_y, int start_x, int pitch){
-  site result;
-  result.y = abs(2 * start_y + pitch) / 2;
-  result.x = abs(2 * start_x + pitch) / 2;
-  return result;
-}
-
 site * get_center_array(int size, int divisions){
   site * center_array = (site *)calloc(pow(4, divisions), sizeof(site));
   int pitch = (size - 1)/pow(2, divisions);
@@ -82,6 +75,29 @@ void voronoi_diagram(short ** map, int size, site * sites, int site_quantity, in
   }
 }
 
+void worley_noise(short ** diagram, float ** map, int size, site * sites, int site_quantity, int p){
+  short current_site_id;
+  float current_distance;
+  float * max_distances = (float *)calloc(site_quantity, sizeof(float));
+  for (int i = 0; i < size; i ++){
+    for (int j = 0; j < size; j ++){
+      current_site_id = diagram[i][j];
+      current_distance = minkowski_distance(i, j, sites[current_site_id].y, sites[current_site_id].x, p);
+      if (current_distance > max_distances[current_site_id]){
+        max_distances[current_site_id] = current_distance;
+      }
+    }
+  }
+  for (int i = 0; i < size; i ++){
+    for (int j = 0; j < size; j ++){
+      current_site_id = diagram[i][j];
+      current_distance = minkowski_distance(i, j, sites[current_site_id].y, sites[current_site_id].x, p);
+      map[i][j] = current_distance/max_distances[current_site_id];
+    }
+  }
+  free(max_distances);
+}
+
 short ** generate_voronoi_diagram(int seed, int size, int divisions, int p){
   srand(seed);
   short ** map = (short **)calloc(size, sizeof(short *));
@@ -96,3 +112,36 @@ short ** generate_voronoi_diagram(int seed, int size, int divisions, int p){
   free(centarr);
   return map;
 }
+
+float ** generate_worley_noise(int seed, int size, int divisions, int p){
+  srand(seed);
+  int current_site_id = 0;
+  float current_distance = 0;
+  site * centarr = get_center_array(size, divisions);
+  int cent_q = pow(4, divisions);
+  move_centers(seed, centarr, cent_q);
+  float * distarr = (float *)calloc(cent_q, sizeof(float));
+  float ** map = (float **)calloc(size, sizeof(float *));
+  for (int i = 0; i < size; i ++){
+    map[i] = (float *)calloc(size, sizeof(float));
+    for (int j = 0; j < size; j ++){
+      current_site_id = get_closest_site(i, j, centarr, cent_q, p);
+      current_distance = minkowski_distance(i, j, centarr[current_site_id].y, centarr[current_site_id].x, p);
+      if (current_distance > distarr[current_site_id]){
+        distarr[current_site_id] = current_distance;
+      }
+    }
+  }
+  for (int i = 0; i < size; i ++){
+    for (int j = 0; j < size; j ++){
+      current_site_id = get_closest_site(i, j, centarr, cent_q, p);
+      current_distance = minkowski_distance(i, j, centarr[current_site_id].y, centarr[current_site_id].x, p);
+      map[i][j] = (distarr[current_site_id] - current_distance)/distarr[current_site_id];
+    }
+  }
+  free(centarr);
+  free(distarr);
+
+  return map;
+}
+
