@@ -46,7 +46,7 @@ int main() {
   for (int i = 0; i < 257; i ++) {
     map[i] = calloc(257, sizeof(float));
     for (int j = 0; j < 257; j ++) {
-      map[i][j] = octave_gradient_noise(i, j, 64, 4, 0.65, 1337);
+      map[i][j] = octave_gradient_noise(i/64., j/64., 6, 0.5, 1337);
     }
   }
 

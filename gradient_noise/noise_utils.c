@@ -6,37 +6,6 @@ float dot_product(float2 a, float2 b) {
   return a.x * b.x + a.y * b.y;
 }
 
-float hash_to_normalized_float(uint64_t hash) {
-  float normalized = (float)hash / (float)ULONG_MAX;
-
-  return 2.0f * normalized - 1.0f;
-}
-
-float2 hash_to_unit_vector(uint64_t hash) {
-  DIRECTION dir = hash % 4;
-  float a = fabs(hash_to_normalized_float(hash));
-  float2 result;
-  switch (dir) {
-    case UP_LEFT:
-      result.x = 0.0f - a;
-      result.y = a - 1.0f;
-      break;
-    case UP_RIGHT:
-      result.x = a;
-      result.y = a - 1.0f;
-      break;
-    case DOWN_LEFT:
-      result.x = 0.0f - a;
-      result.y = 1.0f - a;
-      break;
-    case DOWN_RIGHT:
-      result.x = a;
-      result.y = 1.0f - a;
-      break;
-  }
-  return result;
-}
-
 float lin_interpolation(float a, float b, float x) {
   return a * (1 - x) + b * x;
 }
