@@ -5,15 +5,15 @@
 #define CLAMP_ONE(x) ((x) < -1 ? -1 : ((x) > 1 ? 1 : (x)))
 
 typedef struct float2 {
-  float x;
-  float y;
+    float x;
+    float y;
 } float2;
 
 typedef struct float4 {
-  float tl;
-  float tr;
-  float bl;
-  float br;
+    float tl;
+    float tr;
+    float bl;
+    float br;
 } float4;
 
 float dot_product(float2 a, float2 b);
