@@ -1,7 +1,12 @@
 #include "gradient_noise.h"
 #include <string.h>
 #include <stdlib.h>
-#include <raylib.h>
+
+#ifdef RAYLIB_FOUND
+    #include <raylib.h>
+#else
+    #include "raylib/src/raylib.h"
+#endif
 
 char get_ASCII(float a) {
     char * buff = "$@B%%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
@@ -41,7 +46,7 @@ void draw_colors(float ** map, int size, short tile_size){
     }
 }
 
-int main() {
+int main(void) {
     float ** map = calloc(257, sizeof(float *));
     for (int i = 0; i < 257; i ++) {
         map[i] = calloc(257, sizeof(float));

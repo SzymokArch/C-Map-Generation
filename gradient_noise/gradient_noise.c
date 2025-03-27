@@ -3,8 +3,13 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <xxhash.h>
 #include <math.h>
+
+#ifdef XXHASH_FOUND
+    #include <xxhash.h>
+#else
+    #include "xxHash/xxhash.h"
+#endif
 
 #define VECTOR_COUNT 36
 float2 VECTORS[36] = 
