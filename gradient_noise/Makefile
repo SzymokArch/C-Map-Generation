@@ -1,5 +1,5 @@
 # Compiler
-CC = cc
+CC = clang
 CFLAGS = -Wall -Wextra -pedantic
 
 # Libraries
@@ -8,80 +8,84 @@ LIBS = -lGL -lm -lpthread -ldl -lrt -lX11
 # Files
 OBJ = main.o noise_utils.o gradient_noise.o
 
-# Check for raylib
-RAYLIB_EXISTS = 0
-RAYLIB_DIR := raylib
-RAYLIB_LIB := $(RAYLIB_DIR)/src/libraylib.a
-
-# First, check if pkg-config can find raylib
-ifeq ($(shell pkg-config --exists raylib && echo yes),yes)
-	RAYLIB_EXISTS = 1
-	CFLAGS += $(shell pkg-config --cflags raylib)
-	LIBS += $(shell pkg-config --libs raylib)
-else
-	# Second check: check if the static library exists
-	ifeq ($(shell test -e $(RAYLIB_LIB) && echo yes),yes)
-		RAYLIB_EXISTS = 1
-		CFLAGS += -I$(RAYLIB_DIR)/src
-		LIBS += -L$(RAYLIB_DIR)/src -lraylib
-	endif
-endif
-
-# Add a flag if raylib is found
-ifeq ($(RAYLIB_EXISTS), 1)
-	CFLAGS += -DRAYLIB_FOUND
-endif
-
-# Check for xxHash
-XXHASH_EXISTS = 0
+# Checking for xxHash
 XXHASH_DIR := xxHash
-XXHASH_LIB := $(XXHASH_DIR)/libxxhash.a
 
-# First, check if pkg-config can find xxhash
 ifeq ($(shell pkg-config --exists libxxhash && echo yes),yes)
-	XXHASH_EXISTS = 1
-	CFLAGS += $(shell pkg-config --cflags lxxhash)
-	LIBS += $(shell pkg-config --libs lxxhash)
+# xxhash is installed system-wide
+XXHASH_EXISTS := 1
+CFLAGS += -DXXHASH_FOUND
+LIBS += -lxxhash
+
+else ifeq ($(shell test -e $(XXHASH_DIR)/libxxhash.a && echo yes),yes)
+# xxhash is statically built
+XXHASH_EXISTS := 2
+CFLAGS += -I $(XXHASH_DIR)
+LIBS += -L $(XXHASH_DIR) -lxxhash
+
 else
-	# Second check: check if the static library exists
-	ifeq ($(shell test -e $(XXHASH_LIB) && echo yes),yes)
-		XXHASH_EXISTS = 1
-		CFLAGS += -I$(XXHASH_DIR)
-		LIBS += -L$(XXHASH_DIR) -lxxhash
-	endif
+# xxHash isn't found
+XXHASH_EXISTS := 0
+CFLAGS += -I $(XXHASH_DIR)
+LIBS += -L $(XXHASH_DIR) -lxxhash
+
 endif
 
-# Add a flag if xxhash is found
-ifeq ($(XXHASH_EXISTS), 1)
-	CFLAGS += -DXXHASH_FOUND
+# Checking for raylib
+RAYLIB_DIR := raylib
+
+ifeq ($(shell pkg-config --exists raylib && echo yes),yes)
+# raylib is installed system-wide
+RAYLIB_EXISTS := 1
+CFLAGS += -DRAYLIB_FOUND
+LIBS += -lraylib
+
+else ifeq ($(shell test -e $(RAYLIB_DIR)/src/libraylib.a && echo yes),yes)
+# raylib is statically built
+RAYLIB_EXISTS := 2
+CFLAGS += -I $(RAYLIB_DIR)/src
+LIBS += -L $(RAYLIB_DIR)/src -lraylib
+
+else
+# raylib isn't found
+RAYLIB_EXISTS := 0
+CFLAGS += -I $(RAYLIB_DIR)/src
+LIBS += -L $(RAYLIB_DIR)/src -lraylib
+
 endif
 
-output: $(OBJ) build_raylib build_xxhash
+output: $(OBJ) build_xxhash build_raylib
 	$(CC) $(OBJ) -o output $(LIBS)
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-build_raylib:
-	@if [ $(RAYLIB_EXISTS) -eq 1 ]; then \
-		echo "raylib is installed on the system"; \
-	else \
-		echo "raylib is not installed, building from source"; \
-		git clone --depth=1 https://github.com/raysan5/raylib.git; \
-		cd raylib/src && make PLATFORM=PLATFORM_DESKTOP XXHASH_LIBTYPE=STATIC; \
-	fi
-
-
 build_xxhash:
-	@if [ $(XXHASH_EXISTS) -eq 1 ]; then \
-		echo "xxhash is installed on the system"; \
-	else \
-		echo "xxhash is not installed, building from source"; \
-		git clone --depth=1 https://github.com/Cyan4973/xxHash.git; \
-		cd xxHash && make; \
-	fi
+	@echo checking for xxHash...
+ifeq ($(XXHASH_EXISTS), 1)
+	@echo xxHash installed on the system
+else ifeq ($(XXHASH_EXISTS), 2)
+	@echo xxHash statically built
+else ifeq ($(XXHASH_EXISTS), 0)
+	@echo xxHash not found, building from source
+	git clone --depth=1 https://github.com/Cyan4973/xxHash.git
+	cd xxHash && make
+endif
 
+build_raylib:
+	@echo checking for raylib...
+ifeq ($(RAYLIB_EXISTS), 1)
+	@echo raylib installed on the system
+else ifeq ($(RAYLIB_EXISTS), 2)
+	@echo raylib statically built
+else ifeq ($(RAYLIB_EXISTS), 0)
+	@echo raylib not found, building from source
+	git clone --depth=1 https://github.com/raysan5/raylib.git
+	cd raylib/src && make PLATFORM=PLATFORM_DESKTOP XXHASH_LIBTYPE=STATIC
+endif
 
 clean:
-	rm *.o
 	rm output
+	rm *.o
+
+
