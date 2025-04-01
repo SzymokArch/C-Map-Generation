@@ -1,5 +1,5 @@
 # Compiler
-CC = clang
+CC = cc
 CFLAGS = -Wall -Wextra -pedantic
 
 # Libraries
@@ -98,5 +98,8 @@ endif
 clean:
 	rm output
 	rm *.o
-
-
+	@read -p "Do you also want to remove the statically built libraries? (y/n) " choice; \
+	if [ "$$choice" == "y" ]; then \
+		rm -fr xxHash; \
+		rm -fr raylib; \
+	fi
