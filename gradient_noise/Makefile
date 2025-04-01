@@ -68,8 +68,8 @@ ifeq ($(XXHASH_EXISTS), 1)
 else ifeq ($(XXHASH_EXISTS), 2)
 	@echo xxHash statically built
 else ifeq ($(XXHASH_EXISTS), 0)
-	@read -p "xxHash not found, do you want to build it from source? (y/n) " choice; \
-	if [ "$$choice" == "y" ]; then \
+	@read -p "xxHash not found, do you want to build it from source? (Y/n) " choice; \
+	if [ "$$choice" == "y" ] || [ "$$choice" == "" ]; then \
 		git clone --depth=1 https://github.com/Cyan4973/xxHash.git; \
 		cd xxHash && make; \
 	else \
@@ -85,8 +85,8 @@ ifeq ($(RAYLIB_EXISTS), 1)
 else ifeq ($(RAYLIB_EXISTS), 2)
 	@echo raylib statically built
 else ifeq ($(RAYLIB_EXISTS), 0)
-	@read -p "raylib not found, do you want to build it from source? (y/n) " choice; \
-	if [ "$$choice" == "y" ]; then \
+	@read -p "raylib not found, do you want to build it from source? (Y/n) " choice; \
+	if [ "$$choice" == "y" ] || [ "$$choice" == "" ]; then \
 		git clone --depth=1 https://github.com/raysan5/raylib.git; \
 		cd raylib/src && make PLATFORM=PLATFORM_DESKTOP XXHASH_LIBTYPE=STATIC; \
 	else \
@@ -96,9 +96,12 @@ else ifeq ($(RAYLIB_EXISTS), 0)
 endif
 
 clean:
-	rm output
-	rm *.o
-	@read -p "Do you also want to remove the statically built libraries? (y/n) " choice; \
+	@if ls *.o 1> /dev/null 2>&1; then \
+		echo "Removing binary and object files..."; \
+		rm output; \
+		rm *.o; \
+	fi
+	@read -p "Do you also want to remove the statically built libraries? (y/N) " choice; \
 	if [ "$$choice" == "y" ]; then \
 		rm -fr xxHash; \
 		rm -fr raylib; \
