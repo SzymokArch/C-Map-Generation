@@ -54,8 +54,9 @@ LIBS += -L $(RAYLIB_DIR)/src -lraylib
 
 endif
 
-output: $(OBJ) build_xxhash build_raylib
+output: build_xxhash build_raylib $(OBJ)
 	$(CC) $(OBJ) -o output $(LIBS)
+	@echo "Succesfully built. To execute run ./output"
 
 %.o: %.c
 	$(CC) -c $< -o $@ $(CFLAGS)
@@ -67,9 +68,14 @@ ifeq ($(XXHASH_EXISTS), 1)
 else ifeq ($(XXHASH_EXISTS), 2)
 	@echo xxHash statically built
 else ifeq ($(XXHASH_EXISTS), 0)
-	@echo xxHash not found, building from source
-	git clone --depth=1 https://github.com/Cyan4973/xxHash.git
-	cd xxHash && make
+	@read -p "xxHash not found, do you want to build it from source? (y/n) " choice; \
+	if [ "$$choice" == "y" ]; then \
+		git clone --depth=1 https://github.com/Cyan4973/xxHash.git; \
+		cd xxHash && make; \
+	else \
+		echo "Aborting build"; \
+		exit 1; \
+	fi
 endif
 
 build_raylib:
@@ -79,9 +85,14 @@ ifeq ($(RAYLIB_EXISTS), 1)
 else ifeq ($(RAYLIB_EXISTS), 2)
 	@echo raylib statically built
 else ifeq ($(RAYLIB_EXISTS), 0)
-	@echo raylib not found, building from source
-	git clone --depth=1 https://github.com/raysan5/raylib.git
-	cd raylib/src && make PLATFORM=PLATFORM_DESKTOP XXHASH_LIBTYPE=STATIC
+	@read -p "raylib not found, do you want to build it from source? (y/n) " choice; \
+	if [ "$$choice" == "y" ]; then \
+		git clone --depth=1 https://github.com/raysan5/raylib.git; \
+		cd raylib/src && make PLATFORM=PLATFORM_DESKTOP XXHASH_LIBTYPE=STATIC; \
+	else \
+		echo "Aborting build"; \
+		exit 1; \
+	fi
 endif
 
 clean:
