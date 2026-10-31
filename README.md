@@ -2,11 +2,9 @@
 Generating random maps is a cornerstone of many creative IT focused industries, 
 like **3D animation**, **3D modelling** and especially **game development**.
 There are a lot of ready-made implementations on the web, but a lot of them are quite hard to understand.
-My implementations strive to be easy to understand and reimplement.
+My implementations strive to be easy to understand and re implement.
 
-In depth explenations of the algorithms will be in each directory.
-
-* [Cellular Automata](../main/cellular_automata)
+In depth explanations of the algorithms will be in each directory.
 
 *Graphical examples made using the [raylib](https://www.raylib.com) graphics library*
 
