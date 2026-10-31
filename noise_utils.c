@@ -1,5 +1,6 @@
 #include "noise_utils.h"
 #include <stddef.h>
+#include <stdint.h>
 
 static constexpr float2 GRADIENTS[GRADIENT_COUNT]
     = { { 1.000000000f, 0.000000000f },   { 0.923879533f, 0.382683432f },
@@ -11,7 +12,7 @@ static constexpr float2 GRADIENTS[GRADIENT_COUNT]
         { -0.000000000f, -1.000000000f }, { 0.382683432f, -0.923879533f },
         { 0.707106781f, -0.707106781f },  { 0.923879533f, -0.382683432f } };
 
-float2 get_gradient_at(int x, int y, uint64_t seed, uint8_t current_octave)
+uint64_t lattice_hash(int x, int y, uint64_t seed, uint8_t current_octave)
 {
     // Mix the seed with the current octave
     seed += UINT64_C(0x9e3779b97f4a7c15) * ((uint64_t)current_octave + 1);
@@ -24,30 +25,24 @@ float2 get_gradient_at(int x, int y, uint64_t seed, uint8_t current_octave)
     uint64_t hash = combined ^ seed;
     hash = (hash ^ (hash >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
     hash = (hash ^ (hash >> 27)) * UINT64_C(0x94d049bb133111eb);
-    hash ^= (hash >> 31);
+    return hash ^ (hash >> 31);
+}
 
+float2 get_gradient_at(int x, int y, uint64_t seed, uint8_t current_octave)
+{
     // Mask the hash to get the gradient from the array
+    uint64_t hash = lattice_hash(x, y, seed, current_octave);
     size_t index = hash & (GRADIENT_COUNT - 1);
     return GRADIENTS[index];
 }
 
 float get_value_at(int x, int y, uint64_t seed, uint8_t current_octave)
 {
-    // Mix the seed with the current octave
-    seed += UINT64_C(0x9e3779b97f4a7c15) * ((uint64_t)current_octave + 1);
-    seed = (seed ^ (seed >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
-    seed = (seed ^ (seed >> 27)) * UINT64_C(0x94d049bb133111eb);
-    seed ^= (seed >> 31);
-
-    // Hash the input values
-    uint64_t combined = ((uint64_t)(uint32_t)x << 32) | (uint32_t)y;
-    uint64_t hash = combined ^ seed;
-    hash = (hash ^ (hash >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
-    hash = (hash ^ (hash >> 27)) * UINT64_C(0x94d049bb133111eb);
-    hash ^= (hash >> 31);
-
-    // Convert the upper 24 bits to [0, 1).
-    return (float)(hash >> 40) * (1.0f / 16777216.0f);
+    uint64_t hash = lattice_hash(x, y, seed, current_octave);
+    // Convert the upper 24 bits to [0, 1)
+    float value = (float)(hash >> 40) * (1.0f / 16777216.0f);
+    // Remap to [-1, 1)
+    return value * 2.0f - 1.0f;
 }
 
 float bilinear_interpolation(

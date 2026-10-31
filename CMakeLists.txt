@@ -10,8 +10,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-find_package(raylib REQUIRED)
-
+# Noise generation library
 add_library(noise STATIC
     noise.c
     noise_utils.c
@@ -29,20 +28,34 @@ if(UNIX)
     target_link_libraries(noise PUBLIC m)
 endif()
 
-add_executable(MapGenC main.c)
+# Output utilities library
+add_library(output STATIC
+    output/output.c
+)
+
+target_include_directories(output
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/output
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/external
+)
+
+# Main executable
+add_executable(MapGenC
+    main.c
+    cli/cli.c
+)
 
 target_link_libraries(MapGenC
     PRIVATE
         noise
-        raylib
+        output
 )
 
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(noise PRIVATE
-        -Wall -Wextra -Wpedantic
-    )
-
-    target_compile_options(MapGenC PRIVATE
-        -Wall -Wextra -Wpedantic
-    )
+    foreach(target noise output MapGenC)
+        target_compile_options(${target} PRIVATE
+            -Wall -Wextra -Wpedantic
+        )
+    endforeach()
 endif()

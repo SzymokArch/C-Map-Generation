@@ -34,6 +34,11 @@ static inline float clamp01(float x)
     return fminf(fmaxf(x, 0.0f), 1.0f);
 }
 
+static inline float clamp_signed_unit(float x)
+{
+    return fminf(fmaxf(x, -1.0f), 1.0f);
+}
+
 static inline float remap_signed_to_01(float x)
 {
     return (x + 1.0f) * 0.5f;

@@ -1,106 +1,125 @@
+
+#include "cli/cli.h"
+#include "noise.h"
+#include "output/output.h"
+
+#include <errno.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "noise.h"
-// #include "SimplexNoise/simplex_noise.h"
-#include "GradientNoise/gradient_noise.h"
-#include <raylib.h>
-
-char get_ASCII(float a)
+static char* make_filename(const char* prefix, const char* extension)
 {
-    char* buff = "$@B%%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/"
-                 "\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ";
-    int size = strlen(buff);
-    float b = (a + 1) / 2;
-    int index = b * (size - 1);
-    return buff[index];
+    size_t length = strlen(prefix) + strlen(extension) + 1;
+
+    char* filename = malloc(length);
+
+    if (!filename)
+        return NULL;
+
+    snprintf(filename, length, "%s%s", prefix, extension);
+
+    return filename;
 }
 
-void draw_greyscale(float** map, int size, short tile_size)
+int main(int argc, char** argv)
 {
-    Color clr = { 0, 0, 0, 255 };
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            clr.a = (unsigned char)(255 * map[i][j]);
-            DrawRectangle(
-                j * tile_size,
-                i * tile_size,
-                tile_size,
-                tile_size,
-                clr
-            );
+    cli_config config;
+
+    cli_set_defaults(&config);
+
+    int err = cli_parse(argc, argv, &config);
+
+    if (err == 1) {
+        cli_print_help(argv[0]);
+        return EXIT_SUCCESS;
+    }
+
+    if (err != 0) {
+        fprintf(stderr, "Invalid command-line arguments.\n");
+        cli_print_help(argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    size_t pixel_count = config.width * config.height;
+
+    if (pixel_count > SIZE_MAX / sizeof(float)) {
+        fprintf(stderr, "Terrain allocation size overflow.\n");
+        return EXIT_FAILURE;
+    }
+
+    float* terrain = malloc(pixel_count * sizeof(float));
+
+    if (!terrain) {
+        perror("malloc");
+        return EXIT_FAILURE;
+    }
+
+    octave_noise_params params = { .noise_function = config.noise_function,
+                                   .x = 0,
+                                   .y = 0,
+                                   .seed = config.seed,
+                                   .octave_count = config.octave_count,
+                                   .ease_function = config.ease_function,
+                                   .init_cellsize = config.cellsize,
+                                   .persistence = config.persistence,
+                                   .lacunarity = config.lacunarity };
+
+    printf("Generating terrain: %zux%zu\n", config.width, config.height);
+
+    generate_octave_noise_map(params, terrain, config.height, config.width);
+
+    printf("Generation complete.\n");
+
+    if (config.format == OUTPUT_PNG || config.format == OUTPUT_BOTH) {
+
+        char* filename = make_filename(config.output_name, ".png");
+
+        if (!filename) {
+            free(terrain);
+            return EXIT_FAILURE;
         }
-    }
-}
 
-Color get_color_from_height(float height)
-{
-    Color clr = { .a = 255 };
-    if (height < 0.334) {
-        // water
-        clr.r = 0;
-        clr.g = (uint8_t)(255 * (height / 0.334));
-        clr.b = 255;
-    }
-    else if (height < 0.667) {
-        clr.r = 0;
-        clr.g = (uint8_t)(255 - (255 * ((height - 0.334) / 0.334)));
-        clr.b = 0;
-    }
-    else {
-        clr.r = (uint8_t)(255 * ((height - 0.667) / 0.334));
-        clr.g = (uint8_t)(255 * ((height - 0.667) / 0.334));
-        clr.b = (uint8_t)(255 * ((height - 0.667) / 0.334));
-    }
-    return clr;
-}
+        err = output_to_image(
+            terrain,
+            config.height,
+            config.width,
+            filename,
+            config.color
+        );
 
-void draw_colors(float** map, int size, short tile_size)
-{
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            float a = (map[i][j] + 1.0f) / 2.0f;
-            DrawRectangle(
-                j * tile_size,
-                i * tile_size,
-                tile_size,
-                tile_size,
-                get_color_from_height(a)
-            );
+        if (err != 0) {
+            fprintf(stderr, "PNG export failed: %s\n", strerror(-err));
         }
-    }
-}
-
-int main(void)
-{
-    float** map = calloc(257, sizeof(float*));
-    for (int i = 0; i < 257; i++) {
-        map[i] = calloc(257, sizeof(float));
-        for (int j = 0; j < 257; j++) {
-            map[i][j] = noise(
-                gradient_noise2D,
-                j / 64.0f,
-                i / 64.0f,
-                2137,
-                0,
-                cosine_ease
-            );
-            // map[i][j] = simplex_noise2D(i / 64., j / 64., 2137, 0);
+        else {
+            printf("Saved %s\n", filename);
         }
+
+        free(filename);
     }
 
-    InitWindow(1024, 1024, "Noise Test");
-    while (!(WindowShouldClose())) {
-        BeginDrawing();
-        {
-            ClearBackground(WHITE);
-            draw_colors(map, 257, 4);
+    if (config.format == OUTPUT_CSV || config.format == OUTPUT_BOTH) {
+
+        char* filename = make_filename(config.output_name, ".csv");
+
+        if (!filename) {
+            free(terrain);
+            return EXIT_FAILURE;
         }
-        EndDrawing();
+
+        err = output_to_csv(terrain, config.height, config.width, filename);
+
+        if (err != 0) {
+            fprintf(stderr, "CSV export failed: %s\n", strerror(-err));
+        }
+        else {
+            printf("Saved %s\n", filename);
+        }
+
+        free(filename);
     }
 
-    for (int i = 0; i < 257; i++) {
-        free(map[i]);
-    }
-    free(map);
+    free(terrain);
+
+    return EXIT_SUCCESS;
 }
